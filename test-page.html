@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Backbase Secure Runtime - Test Page</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            margin-top: 0;
+        }
+        .status {
+            padding: 15px;
+            border-radius: 4px;
+            margin: 20px 0;
+        }
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .status.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 5px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        textarea {
+            width: 100%;
+            min-height: 100px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 14px;
+            margin: 10px 0;
+        }
+        .result {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 10px 0;
+            border-left: 4px solid #007bff;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Backbase Secure Runtime - Test Page</h1>
+        
+        <div id="status" class="status info">
+            Checking API availability...
+        </div>
+
+        <h2>API Status</h2>
+        <div id="api-info"></div>
+
+        <h2>Test Query</h2>
+        <textarea id="prompt" placeholder="Enter your prompt here...">What is artificial intelligence?</textarea>
+        <br>
+        <button id="test-query" onclick="testQuery()">Test Query</button>
+        <button id="test-search" onclick="testSearch()">Test Search</button>
+        
+        <div id="result"></div>
+    </div>
+
+    <script>
+        // Check if backbaseAI is available
+        function checkAPI() {
+            const statusDiv = document.getElementById('status');
+            const apiInfoDiv = document.getElementById('api-info');
+            
+            if (typeof window.backbaseAI !== 'undefined') {
+                statusDiv.className = 'status success';
+                statusDiv.textContent = '✓ Backbase AI Bridge is loaded and ready!';
+                
+                apiInfoDiv.innerHTML = `
+                    <div class="result">
+                        <strong>Version:</strong> ${window.backbaseAI.getVersion()}<br>
+                        <strong>Ready:</strong> ${window.backbaseAI.isReady() ? 'Yes' : 'No'}
+                    </div>
+                `;
+            } else {
+                statusDiv.className = 'status error';
+                statusDiv.textContent = '✗ Backbase AI Bridge is not available. Make sure you are running this in the Backbase Secure Runtime browser.';
+                
+                apiInfoDiv.innerHTML = `
+                    <div class="result">
+                        <p>The backbaseAI API is not available. This page should be loaded in the Backbase Secure Runtime browser.</p>
+                    </div>
+                `;
+            }
+        }
+
+        // Test query function
+        async function testQuery() {
+            if (typeof window.backbaseAI === 'undefined') {
+                alert('Backbase AI Bridge is not available');
+                return;
+            }
+
+            const prompt = document.getElementById('prompt').value;
+            const resultDiv = document.getElementById('result');
+            const button = document.getElementById('test-query');
+            
+            button.disabled = true;
+            button.textContent = 'Processing...';
+            resultDiv.innerHTML = '<div class="result">Processing query...</div>';
+
+            try {
+                // Note: This will fail until the API server is implemented
+                const result = await window.backbaseAI.query(prompt, {
+                    max_tokens: 100,
+                    temperature: 0.7
+                });
+                
+                resultDiv.innerHTML = `
+                    <div class="result">
+                        <strong>Result:</strong><br>
+                        <pre>${JSON.stringify(result, null, 2)}</pre>
+                    </div>
+                `;
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="result" style="border-left-color: #dc3545;">
+                        <strong>Error:</strong><br>
+                        ${error.message}<br>
+                        <small>Note: The API server is not yet implemented. This is expected.</small>
+                    </div>
+                `;
+            } finally {
+                button.disabled = false;
+                button.textContent = 'Test Query';
+            }
+        }
+
+        // Test search function
+        async function testSearch() {
+            if (typeof window.backbaseAI === 'undefined') {
+                alert('Backbase AI Bridge is not available');
+                return;
+            }
+
+            const query = document.getElementById('prompt').value || 'test query';
+            const resultDiv = document.getElementById('result');
+            const button = document.getElementById('test-search');
+            
+            button.disabled = true;
+            button.textContent = 'Searching...';
+            resultDiv.innerHTML = '<div class="result">Searching...</div>';
+
+            try {
+                const result = await window.backbaseAI.search(query, 5);
+                
+                resultDiv.innerHTML = `
+                    <div class="result">
+                        <strong>Search Results:</strong><br>
+                        <pre>${JSON.stringify(result, null, 2)}</pre>
+                    </div>
+                `;
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="result" style="border-left-color: #dc3545;">
+                        <strong>Error:</strong><br>
+                        ${error.message}<br>
+                        <small>Note: The RAG search is not yet implemented. This is expected.</small>
+                    </div>
+                `;
+            } finally {
+                button.disabled = false;
+                button.textContent = 'Test Search';
+            }
+        }
+
+        // Check API on load
+        window.addEventListener('load', () => {
+            checkAPI();
+        });
+    </script>
+</body>
+</html>
+

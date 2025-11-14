@@ -1,0 +1,22 @@
+{
+  "app": {
+    "startUrl": "file://test-page.html"
+  },
+  "security": {
+    "allowedOrigins": [
+      "https://*.backbase.com",
+      "https://*.backbase.io",
+      "https://localhost:*",
+      "http://localhost:*",
+      "https://127.0.0.1:*",
+      "http://127.0.0.1:*",
+      "file://*"
+    ],
+    "certificatePinning": {
+      "enabled": false
+    }
+  },
+  "logging": {
+    "level": "debug"
+  }
+}

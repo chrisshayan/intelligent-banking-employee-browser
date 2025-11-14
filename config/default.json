@@ -1,0 +1,46 @@
+{
+  "app": {
+    "name": "Backbase Secure Runtime",
+    "version": "1.0.0",
+    "startUrl": "https://app.backbase.com"
+  },
+  "security": {
+    "allowedOrigins": [
+      "https://*.backbase.com",
+      "https://*.backbase.io",
+      "https://localhost:*",
+      "https://127.0.0.1:*"
+    ],
+    "certificatePinning": {
+      "enabled": false,
+      "pins": []
+    },
+    "csp": {
+      "enabled": true,
+      "policy": "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https://localhost:8443 https://*.backbase.com https://*.backbase.io; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+    }
+  },
+  "slm": {
+    "modelPath": "./resources/models/phi4-mini-4bit.onnx",
+    "maxTokens": 512,
+    "temperature": 0.7,
+    "topP": 0.9,
+    "topK": 50
+  },
+  "api": {
+    "port": 8443,
+    "host": "127.0.0.1",
+    "tls": {
+      "enabled": true,
+      "certPath": "./config/certs/server.crt",
+      "keyPath": "./config/certs/server.key"
+    }
+  },
+  "logging": {
+    "level": "info",
+    "file": "./logs/app.log",
+    "maxSize": "10m",
+    "maxFiles": 5
+  }
+}
+

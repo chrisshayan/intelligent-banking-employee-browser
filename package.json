@@ -1,0 +1,74 @@
+{
+  "name": "backbase-secure-runtime",
+  "version": "1.0.0",
+  "description": "Backbase Secure Runtime - Intelligent Employee Browser",
+  "main": "src/main/main.js",
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron . --dev",
+    "build": "electron-builder",
+    "build:native": "node scripts/build/build-native.js",
+    "test": "jest",
+    "test:unit": "jest --testPathPattern=unit",
+    "test:integration": "jest --testPathPattern=integration",
+    "test:watch": "jest --watch",
+    "lint": "eslint src test",
+    "lint:fix": "eslint src test --fix",
+    "format": "prettier --write \"src/**/*.{js,json}\" \"test/**/*.js\"",
+    "format:check": "prettier --check \"src/**/*.{js,json}\" \"test/**/*.js\""
+  },
+  "keywords": [
+    "electron",
+    "browser",
+    "ai",
+    "slm",
+    "backbase"
+  ],
+  "author": "Backbase",
+  "license": "PROPRIETARY",
+  "dependencies": {
+    "electron-updater": "^6.1.0",
+    "node-addon-api": "^8.5.0"
+  },
+  "devDependencies": {
+    "electron": "^28.0.0",
+    "@types/node": "^20.11.0",
+    "electron-builder": "^24.0.0",
+    "eslint": "^8.57.0",
+    "jest": "^29.0.0",
+    "node-gyp": "^12.1.0",
+    "prettier": "^3.2.5"
+  },
+  "build": {
+    "appId": "com.backbase.secure-runtime",
+    "productName": "Backbase Secure Runtime",
+    "directories": {
+      "output": "build/dist",
+      "buildResources": "resources"
+    },
+    "files": [
+      "src/**/*",
+      "package.json",
+      "!**/*.{md,ts,map}",
+      "!**/test/**/*"
+    ],
+    "win": {
+      "target": "nsis",
+      "icon": "resources/icons/icon.ico"
+    },
+    "mac": {
+      "target": "dmg",
+      "icon": "resources/icons/icon.icns",
+      "category": "public.app-category.business"
+    },
+    "linux": {
+      "target": [
+        "AppImage",
+        "deb",
+        "rpm"
+      ],
+      "icon": "resources/icons/icon.png",
+      "category": "Office"
+    }
+  }
+}

@@ -1,0 +1,42 @@
+# Dependencies
+node_modules/
+package-lock.json
+
+# Build outputs
+build/
+dist/
+out/
+*.log
+
+# Native libraries (downloaded)
+native-libs/onnxruntime/
+native-libs/faiss/
+native-libs/openssl/
+
+# Model files (large, downloaded separately)
+resources/models/*.onnx
+resources/models/*.model
+resources/models/*.bin
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment
+.env
+.env.local
+
+# Test coverage
+coverage/
+.nyc_output/
+
+# Temporary files
+*.tmp
+*.temp

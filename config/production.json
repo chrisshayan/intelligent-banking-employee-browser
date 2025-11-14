@@ -1,0 +1,14 @@
+{
+  "security": {
+    "certificatePinning": {
+      "enabled": true
+    },
+    "csp": {
+      "policy": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https://localhost:8443 https://*.backbase.com https://*.backbase.io; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+    }
+  },
+  "logging": {
+    "level": "info"
+  }
+}
+
