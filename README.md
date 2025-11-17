@@ -1,18 +1,18 @@
-# Banking Secure Runtime
+# Backbase Secure Runtime
 
 Intelligent Employee Browser with on-device AI capabilities.
 
 ## Overview
 
-Banking Secure Runtime is a custom, secure browser environment designed exclusively for bank employees. It provides a seamless, AI-enhanced experience for all Banking applications while ensuring the highest levels of data privacy and security through on-device AI processing.
+Backbase Secure Runtime is a custom, secure browser environment designed exclusively for bank employees. It provides a seamless, AI-enhanced experience for all Backbase applications while ensuring the highest levels of data privacy and security through on-device AI processing.
 
 ## Features
 
 - **On-Device AI Processing**: Small Language Model (SLM) runs locally on the user's machine
 - **Secure Architecture**: Hardened Electron-based browser with comprehensive security controls
-- **Origin Validation**: Only Banking applications can access the AI bridge
+- **Origin Validation**: Only Backbase applications can access the AI bridge
 - **Content Security Policy**: Strict CSP enforcement for all web content
-- **Certificate Pinning**: Enhanced security for Banking domains
+- **Certificate Pinning**: Enhanced security for Backbase domains
 - **Privacy-First**: Sensitive data never leaves the device
 
 ## Development Setup
@@ -28,7 +28,7 @@ Banking Secure Runtime is a custom, secure browser environment designed exclusiv
 1. Clone the repository:
    ```bash
    git clone <repository-url>
-   cd Banking-secure-runtime
+   cd backbase-secure-runtime
    ```
 
 2. Install dependencies:
@@ -49,7 +49,7 @@ Banking Secure Runtime is a custom, secure browser environment designed exclusiv
 ### Project Structure
 
 ```
-Banking-secure-runtime/
+backbase-secure-runtime/
 ├── src/
 │   ├── main/              # Electron main process
 │   │   ├── main.js        # Application entry point
@@ -135,7 +135,7 @@ npm run format
 
 1. Start the app: `npm start` or `npm run dev`
 2. The app will open with a test page (in development mode)
-3. Check the browser console to see if the `BankingAI` bridge is loaded
+3. Check the browser console to see if the `backbaseAI` bridge is loaded
 4. Test the API by clicking the test buttons on the test page
 
 ## Current Status
@@ -182,7 +182,7 @@ Security is a top priority. The application implements:
 
 - Origin-based access control
 - Content Security Policy enforcement
-- Certificate pinning for Banking domains
+- Certificate pinning for Backbase domains
 - Secure session management
 - Encrypted local storage (planned)
 - Process isolation and sandboxing
@@ -193,7 +193,7 @@ See [CONTRIBUTING.md](./CONTRIBUTING.md) for contribution guidelines.
 
 ## License
 
-PROPRIETARY - Banking Internal Use Only
+PROPRIETARY - Backbase Internal Use Only
 
 ## Support
 

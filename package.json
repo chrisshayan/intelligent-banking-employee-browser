@@ -27,11 +27,11 @@
   "author": "Backbase",
   "license": "PROPRIETARY",
   "dependencies": {
+    "electron": "^28.0.0",
     "electron-updater": "^6.1.0",
     "node-addon-api": "^8.5.0"
   },
   "devDependencies": {
-    "electron": "^28.0.0",
     "@types/node": "^20.11.0",
     "electron-builder": "^24.0.0",
     "eslint": "^8.57.0",

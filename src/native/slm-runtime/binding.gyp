@@ -6,12 +6,13 @@
         "src/slm_runtime.cc"
       ],
       "include_dirs": [
-        "<!@(node -p \"require('node-addon-api').include\")"
+        "<!@(node -p 'require(\"node-addon-api\").include')",
+        "../../../../native-libs/onnxruntime/onnxruntime-osx-arm64-1.16.2/include"
       ],
-      "libraries": [],
-      "defines": [
-        "NAPI_DISABLE_CPP_EXCEPTIONS"
+      "libraries": [
+        "../../../../native-libs/onnxruntime/onnxruntime-osx-arm64-1.16.2/lib/libonnxruntime.dylib"
       ],
+      "defines": ["NAPI_DISABLE_CPP_EXCEPTIONS"],
       "cflags_cc": ["-std=c++17"],
       "conditions": [
         ["OS=='mac'", {
