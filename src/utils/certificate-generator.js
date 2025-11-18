@@ -1,48 +1,52 @@
 const crypto = require('crypto');
+const { execSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 
 /**
  * Generate a self-signed certificate for development
+ * Uses openssl command line tool
  */
 function generateSelfSignedCert() {
-  const { generateKeyPairSync } = crypto;
+  const certDir = path.join(__dirname, '../../config/certs');
   
-  // Generate key pair
-  const { publicKey, privateKey } = generateKeyPairSync('rsa', {
-    modulusLength: 2048,
-    publicKeyEncoding: {
-      type: 'spki',
-      format: 'pem'
-    },
-    privateKeyEncoding: {
-      type: 'pkcs8',
-      format: 'pem'
-    }
-  });
+  // Create cert directory if it doesn't exist
+  if (!fs.existsSync(certDir)) {
+    fs.mkdirSync(certDir, { recursive: true });
+  }
 
-  // Create certificate (simplified - in production use proper CA)
-  // For development, we'll create a basic certificate
-  const cert = createSelfSignedCert(publicKey, privateKey);
+  const keyPath = path.join(certDir, 'server.key');
+  const certPath = path.join(certDir, 'server.crt');
 
-  return {
-    cert: cert,
-    key: privateKey
-  };
-}
+  // Check if certificates already exist
+  if (fs.existsSync(keyPath) && fs.existsSync(certPath)) {
+    return {
+      cert: fs.readFileSync(certPath),
+      key: fs.readFileSync(keyPath)
+    };
+  }
 
-/**
- * Create a basic self-signed certificate
- */
-function createSelfSignedCert(publicKey, privateKey) {
-  // This is a simplified version. In production, use a proper certificate library
-  // For now, return a placeholder that HTTP/2 will accept for localhost
-  return `-----BEGIN CERTIFICATE-----
-MIICXTCCAUYCCQDx... (self-signed cert for localhost)
------END CERTIFICATE-----`;
+  try {
+    // Generate private key
+    execSync(`openssl genrsa -out "${keyPath}" 2048`, { stdio: 'ignore' });
+    
+    // Generate self-signed certificate (valid for 365 days)
+    execSync(
+      `openssl req -new -x509 -key "${keyPath}" -out "${certPath}" -days 365 -subj "/CN=localhost"`,
+      { stdio: 'ignore' }
+    );
+
+    return {
+      cert: fs.readFileSync(certPath),
+      key: fs.readFileSync(keyPath)
+    };
+  } catch (error) {
+    console.error('Failed to generate certificate with openssl:', error.message);
+    console.warn('Falling back to HTTP (no TLS)');
+    throw new Error('Certificate generation failed');
+  }
 }
 
 module.exports = {
   generateSelfSignedCert
 };
-

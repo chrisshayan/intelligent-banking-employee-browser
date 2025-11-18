@@ -10,8 +10,11 @@ const activeSessions = new Map();
  */
 function initializeSessionManager() {
   // Handle session token requests from renderer process
-  ipcMain.handle('get-session-token', async (event, { origin }) => {
+  ipcMain.handle('get-session-token', async (event, params = {}) => {
     try {
+      // Extract origin from params or event
+      const origin = params.origin || event.sender.getURL() || 'file://';
+      
       // Validate origin
       if (!validateOrigin(origin)) {
         throw new Error('Unauthorized origin: ' + origin);

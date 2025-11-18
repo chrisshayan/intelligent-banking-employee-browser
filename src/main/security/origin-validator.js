@@ -5,7 +5,8 @@ const DEFAULT_ALLOWED_ORIGINS = [
   /^https:\/\/.*\.backbase\.com$/,
   /^https:\/\/.*\.backbase\.io$/,
   /^https:\/\/localhost:\d+$/, // Allow localhost for development
-  /^https:\/\/127\.0\.0\.1:\d+$/ // Allow 127.0.0.1 for development
+  /^https:\/\/127\.0\.0\.1:\d+$/, // Allow 127.0.0.1 for development
+  /^file:\/\/.*$/ // Allow file:// for local testing
 ];
 
 let allowedOrigins = null;
@@ -54,14 +55,19 @@ function validateOrigin(origin) {
   }
 
   try {
-    // Extract origin from URL if full URL is provided
+    // For file:// URLs, use the full URL for matching
     let originString = origin;
-    try {
-      const url = new URL(origin);
-      originString = url.origin;
-    } catch {
-      // If it's already an origin string, use it as-is
+    if (origin && origin.startsWith('file://')) {
+      // Keep full file:// URL for pattern matching
       originString = origin;
+    } else {
+      try {
+        const url = new URL(origin);
+        originString = url.origin;
+      } catch {
+        // If it's already an origin string, use it as-is
+        originString = origin;
+      }
     }
 
     const patterns = loadAllowedOrigins();
@@ -70,7 +76,7 @@ function validateOrigin(origin) {
     const isAllowed = patterns.some(pattern => pattern.test(originString));
     
     if (!isAllowed) {
-      console.warn('Origin validation failed:', originString);
+      console.warn('Origin validation failed:', originString, 'Patterns:', patterns.map(p => p.toString()));
     }
     
     return isAllowed;
