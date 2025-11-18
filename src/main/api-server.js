@@ -2,7 +2,7 @@ const http2 = require('http2');
 const fs = require('fs');
 const path = require('path');
 const config = require('../utils/config');
-const { validateToken } = require('./session/session-manager');
+const { validateToken, getOriginFromToken } = require('./session/session-manager');
 const { validateOrigin } = require('./security/origin-validator');
 
 let server = null;
@@ -34,7 +34,7 @@ function startAPIServer() {
         const cert = generateSelfSignedCert();
         serverOptions.cert = cert.cert;
         serverOptions.key = cert.key;
-        console.log('✅ Self-signed certificate generated');
+        console.log('Self-signed certificate generated');
       } catch (error) {
         console.error('Failed to generate certificate:', error.message);
         console.warn('Starting API server without TLS (HTTP only)');
@@ -71,7 +71,7 @@ function startAPIServerHTTP() {
   const port = config.get('api.port', 8443);
   const host = config.get('api.host', '127.0.0.1');
   
-  console.warn('⚠️  Starting API server without TLS (HTTP only) - NOT RECOMMENDED FOR PRODUCTION');
+  console.warn('Starting API server without TLS (HTTP only) - NOT RECOMMENDED FOR PRODUCTION');
   
   // Note: HTTP/2 without TLS is not well supported, so we'd need to use HTTP/1.1
   // For now, just log the error and return null
@@ -100,7 +100,7 @@ async function handleRequest(req, res) {
   // Set CORS headers (for localhost, we allow all)
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Origin, Origin');
 
   // Handle OPTIONS (preflight)
   if (req.method === 'OPTIONS') {
@@ -142,18 +142,7 @@ async function handleRequest(req, res) {
  * Authenticate incoming request
  */
 async function authenticateRequest(req) {
-  // Extract origin from referer or origin header
-  const origin = req.headers['referer'] || req.headers['origin'] || '';
-  
-  // Validate origin
-  if (!validateOrigin(origin)) {
-    return {
-      authenticated: false,
-      error: 'Invalid origin'
-    };
-  }
-
-  // Extract token from Authorization header
+  // Extract token from Authorization header first
   const authHeader = req.headers['authorization'];
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
     return {
@@ -163,6 +152,32 @@ async function authenticateRequest(req) {
   }
 
   const token = authHeader.substring(7); // Remove 'Bearer ' prefix
+
+  // Try to get origin from headers (check x-origin first, then standard headers)
+  let origin = req.headers['x-origin'] || req.headers['origin'] || req.headers['referer'] || '';
+  
+  // If no origin in headers, try to find it from the token (for file:// URLs)
+  if (!origin) {
+    origin = getOriginFromToken(token);
+    
+    // If still no origin, allow file:// for development
+    if (!origin) {
+      origin = 'file://';
+    }
+  }
+  
+  // Validate origin
+  if (!validateOrigin(origin)) {
+    console.warn('Origin validation failed:', origin, 'Headers:', {
+      referer: req.headers['referer'],
+      origin: req.headers['origin'],
+      'x-origin': req.headers['x-origin']
+    });
+    return {
+      authenticated: false,
+      error: 'Invalid origin'
+    };
+  }
 
   // Validate token
   if (!validateToken(token, origin)) {

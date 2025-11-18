@@ -8,7 +8,7 @@ async function healthHandler(req, res) {
   
   res.end(JSON.stringify({
     status: 'ok',
-    service: 'Backbase Secure Runtime API',
+    service: 'Smart Coach API',
     version: '1.0.0',
     timestamp: new Date().toISOString()
   }));

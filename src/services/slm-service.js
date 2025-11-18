@@ -1,14 +1,13 @@
 const config = require('../utils/config');
 const path = require('path');
 
-// Try to load native module
+// Load native module if available
 let slmNative = null;
 try {
   slmNative = require('../native/slm-runtime/build/Release/slm_runtime.node');
-  console.log('✅ SLM native module loaded successfully');
+  console.log('SLM native module loaded');
 } catch (error) {
-  console.warn('⚠️  SLM native module not available:', error.message);
-  console.warn('   Falling back to mock implementation');
+  console.warn('SLM native module not available, using mock:', error.message);
 }
 
 let modelLoaded = false;
@@ -38,9 +37,9 @@ async function loadModel() {
     modelLoaded = result;
     
     if (modelLoaded) {
-      console.log('✅ SLM model loaded:', resolvedPath);
+      console.log('SLM model loaded:', resolvedPath);
     } else {
-      console.error('❌ Failed to load SLM model');
+      console.error('Failed to load SLM model');
     }
     
     return modelLoaded;
@@ -110,7 +109,7 @@ function getModelInfo() {
   if (slmNative) {
     try {
       const status = slmNative.getStatus();
-      return {x`x`
+      return {
         name: 'phi4-mini',
         version: '1.0.0',
         status: status.loaded ? 'loaded' : 'not_loaded',

@@ -17,7 +17,7 @@ function calculateFingerprint(certData) {
 }
 
 /**
- * Setup certificate pinning for Backbase domains
+ * Setup certificate pinning for trusted domains
  */
 function setupCertificatePinning() {
   const pins = config.get('security.certificatePinning.pins', DEFAULT_PINS);
@@ -32,8 +32,9 @@ function setupCertificatePinning() {
     (request, callback) => {
       const { hostname, certificate } = request;
 
-      // Only pin Backbase domains
-      if (hostname.endsWith('.backbase.com') || hostname.endsWith('.backbase.io')) {
+      // Certificate pinning can be configured per domain
+      // For now, pinning is disabled by default
+      if (false) {
         try {
           // Calculate certificate fingerprint
           const fingerprint = calculateFingerprint(certificate.data);

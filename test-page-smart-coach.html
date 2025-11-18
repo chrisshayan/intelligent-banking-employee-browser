@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Client Profile - Smart Coach</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+            background: #f5f7fa;
+            color: #2c3e50;
+            line-height: 1.6;
+            height: 100vh;
+            overflow: hidden;
+        }
+        
+        .header {
+            background: #1a2332;
+            color: white;
+            padding: 12px 24px;
+            border-bottom: 3px solid #0066cc;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            height: 50px;
+        }
+        
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        
+        .logo {
+            font-size: 18px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+        
+        .header-title {
+            font-size: 16px;
+            font-weight: 400;
+            opacity: 0.9;
+        }
+        
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+        }
+        
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #28a745;
+        }
+        
+        .status-dot.error {
+            background: #dc3545;
+        }
+        
+        .main-container {
+            display: flex;
+            height: calc(100vh - 50px);
+            overflow: hidden;
+        }
+        
+        .client-panel {
+            width: 50%;
+            background: white;
+            border-right: 1px solid #dee2e6;
+            overflow-y: auto;
+            padding: 24px;
+        }
+        
+        .coach-panel {
+            width: 50%;
+            background: #f8f9fa;
+            overflow-y: auto;
+            padding: 24px;
+        }
+        
+        .panel-header {
+            font-size: 20px;
+            font-weight: 600;
+            color: #1a2332;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 24px;
+            color: #6c757d;
+            cursor: pointer;
+            padding: 0;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .close-btn:hover {
+            color: #2c3e50;
+        }
+        
+        .section {
+            margin-bottom: 24px;
+        }
+        
+        .section-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #495057;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 12px;
+        }
+        
+        .info-row {
+            display: flex;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+        
+        .info-label {
+            font-weight: 600;
+            color: #6c757d;
+            min-width: 120px;
+        }
+        
+        .info-value {
+            color: #2c3e50;
+        }
+        
+        .holdings-list {
+            list-style: none;
+        }
+        
+        .holding-item {
+            padding: 12px;
+            background: #f8f9fa;
+            border-radius: 6px;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .holding-name {
+            font-weight: 500;
+            color: #2c3e50;
+        }
+        
+        .holding-amount {
+            font-weight: 600;
+            color: #0066cc;
+        }
+        
+        .alert-box {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 12px 16px;
+            border-radius: 6px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+        }
+        
+        .alert-icon {
+            color: #856404;
+            font-size: 18px;
+        }
+        
+        .alert-text {
+            flex: 1;
+            color: #856404;
+            font-size: 14px;
+        }
+        
+        .nba-box {
+            background: #d1ecf1;
+            border-left: 4px solid #0066cc;
+            padding: 12px 16px;
+            border-radius: 6px;
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+        }
+        
+        .nba-icon {
+            color: #0c5460;
+            font-size: 18px;
+        }
+        
+        .nba-text {
+            flex: 1;
+            color: #0c5460;
+            font-size: 14px;
+        }
+        
+        .coach-message {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 24px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+        }
+        
+        .coach-bubble {
+            position: relative;
+            padding: 16px;
+            background: #e9ecef;
+            border-radius: 12px;
+            font-size: 14px;
+            color: #2c3e50;
+            line-height: 1.6;
+        }
+        
+        .coach-bubble::before {
+            content: '';
+            position: absolute;
+            bottom: -8px;
+            left: 24px;
+            width: 0;
+            height: 0;
+            border-left: 8px solid transparent;
+            border-right: 8px solid transparent;
+            border-top: 8px solid #e9ecef;
+        }
+        
+        .suggestions {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .suggestion-btn {
+            background: white;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            padding: 12px 16px;
+            text-align: left;
+            font-size: 14px;
+            color: #2c3e50;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .suggestion-btn:hover {
+            background: #f8f9fa;
+            border-color: #0066cc;
+            color: #0066cc;
+        }
+        
+        .input-section {
+            margin-top: 24px;
+            padding-top: 24px;
+            border-top: 1px solid #dee2e6;
+        }
+        
+        .input-group {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .question-input {
+            flex: 1;
+            padding: 10px 14px;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        
+        .question-input:focus {
+            outline: none;
+            border-color: #0066cc;
+            box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.1);
+        }
+        
+        .btn-primary {
+            padding: 10px 20px;
+            background: #0066cc;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+        }
+        
+        .btn-primary:hover:not(:disabled) {
+            background: #0052a3;
+        }
+        
+        .btn-primary:disabled {
+            background: #adb5bd;
+            cursor: not-allowed;
+        }
+        
+        .answer-section {
+            margin-top: 16px;
+            display: none;
+        }
+        
+        .answer-section.visible {
+            display: block;
+        }
+        
+        .answer-content {
+            background: white;
+            border-left: 4px solid #0066cc;
+            padding: 16px;
+            border-radius: 6px;
+            font-size: 14px;
+            line-height: 1.6;
+            color: #2c3e50;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 24px;
+            display: none;
+        }
+        
+        .loading.visible {
+            display: block;
+        }
+        
+        .spinner {
+            border: 3px solid #e9ecef;
+            border-top: 3px solid #0066cc;
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto 12px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .error-message {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 12px;
+            border-radius: 6px;
+            color: #856404;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-left">
+            <div class="logo">BANK PORTAL</div>
+        </div>
+        <div class="status-indicator" id="status-indicator">
+            <div class="status-dot error"></div>
+            <span>Connecting...</span>
+        </div>
+    </div>
+    
+    <div class="main-container">
+        <!-- Client Profile Panel -->
+        <div class="client-panel">
+            <div class="panel-header">Client Profile: Sarah Connor</div>
+            
+            <div class="section">
+                <div class="section-title">Personal Details</div>
+                <div class="info-row">
+                    <span class="info-label">Name:</span>
+                    <span class="info-value">Sarah J. Connor</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Client Since:</span>
+                    <span class="info-value">2011</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">RM:</span>
+                    <span class="info-value">Kyle Reese</span>
+                </div>
+            </div>
+            
+            <div class="section">
+                <div class="section-title">Contact</div>
+                <div class="info-row">
+                    <span class="info-label">Phone:</span>
+                    <span class="info-value">(555) 123-4567</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Email:</span>
+                    <span class="info-value">s.connor@email.com</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Prefers:</span>
+                    <span class="info-value">Secure Message</span>
+                </div>
+            </div>
+            
+            <div class="section">
+                <div class="section-title">Segmentation & Status</div>
+                <div class="info-row">
+                    <span class="info-label">Segment:</span>
+                    <span class="info-value">HIFI (High-Income, Financially Informed)</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Status:</span>
+                    <span class="info-value">Active - High Priority</span>
+                </div>
+            </div>
+            
+            <div class="section">
+                <div class="section-title">Holdings</div>
+                <ul class="holdings-list">
+                    <li class="holding-item">
+                        <span class="holding-name">Premier Global Checking (***456)</span>
+                        <span class="holding-amount">$212,450.00</span>
+                    </li>
+                    <li class="holding-item">
+                        <span class="holding-name">Private Access Brokerage (***789)</span>
+                        <span class="holding-amount">$1,850,230.00</span>
+                    </li>
+                    <li class="holding-item">
+                        <span class="holding-name">CD-1Y-PREM (***123)</span>
+                        <span class="holding-amount">$100,000.00</span>
+                    </li>
+                </ul>
+            </div>
+            
+            <div class="section">
+                <div class="section-title">Alerts & Next Best Actions</div>
+                <div class="alert-box">
+                    <span class="alert-icon">⚠️</span>
+                    <div class="alert-text">
+                        <strong>Alert:</strong> CD Maturing Soon: Premier Global Checking CD ($100,000) matures in 7 days.
+                    </div>
+                </div>
+                <div class="nba-box">
+                    <span class="nba-icon">ℹ️</span>
+                    <div class="nba-text">
+                        <strong>NBA:</strong> Client's HIFI segment profile suggests interest in low-fee, self-directed ESG funds. Review brokerage holdings.
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Smart Coach Panel -->
+        <div class="coach-panel">
+            <div class="panel-header">
+                <span>Smart Coach</span>
+                <button class="close-btn" onclick="closeCoach()">×</button>
+            </div>
+            
+            <div class="coach-message">
+                <div class="coach-bubble">
+                    Hi Kyle, I'm your Smart Coach. I see you're looking at Sarah Connor's file. How can I help?
+                </div>
+            </div>
+            
+            <div class="suggestions">
+                <button class="suggestion-btn" onclick="askQuestion('Summarize client status')">Summarize client status</button>
+                <button class="suggestion-btn" onclick="askQuestion('Explain NBA')">Explain NBA</button>
+                <button class="suggestion-btn" onclick="askQuestion('Compliance on guarantee')">Compliance on 'guarantee'</button>
+                <button class="suggestion-btn" onclick="askQuestion('What is Premier Global Checking?')">What is 'Premier Global Checking'?</button>
+                <button class="suggestion-btn" onclick="askQuestion('Run research on client & market')">Run research on client & market</button>
+                <button class="suggestion-btn" onclick="askQuestion('Explain 2025 strategy')">Explain 2025 strategy</button>
+                <button class="suggestion-btn" onclick="askQuestion('What are our customer segments?')">What are our customer segments?</button>
+                <button class="suggestion-btn" onclick="askQuestion('CVP for HIFI segment')">CVP for HIFI segment</button>
+            </div>
+            
+            <div class="input-section">
+                <div class="input-group">
+                    <input 
+                        type="text" 
+                        id="question-input" 
+                        class="question-input" 
+                        placeholder="Ask a question..."
+                        onkeypress="if(event.key === 'Enter') askQuestionFromInput()"
+                    >
+                    <button id="ask-button" class="btn-primary" onclick="askQuestionFromInput()">Ask</button>
+                </div>
+                
+                <div id="loading" class="loading">
+                    <div class="spinner"></div>
+                    <div>Processing...</div>
+                </div>
+                
+                <div id="answer-section" class="answer-section">
+                    <div id="answer-content" class="answer-content"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function updateStatus(ready) {
+            const indicator = document.getElementById('status-indicator');
+            const dot = indicator.querySelector('.status-dot');
+            const text = indicator.querySelector('span');
+            
+            if (ready) {
+                dot.classList.remove('error');
+                text.textContent = 'Ready';
+            } else {
+                dot.classList.add('error');
+                text.textContent = 'Not Available';
+            }
+        }
+
+        function checkAPI() {
+            if (typeof window.smartCoach !== 'undefined') {
+                updateStatus(true);
+            } else {
+                updateStatus(false);
+            }
+        }
+
+        function closeCoach() {
+            // Could hide or minimize the coach panel
+            console.log('Close coach clicked');
+        }
+
+        async function askQuestion(question) {
+            document.getElementById('question-input').value = question;
+            await askQuestionFromInput();
+        }
+
+        async function askQuestionFromInput() {
+            const questionInput = document.getElementById('question-input');
+            const askButton = document.getElementById('ask-button');
+            const answerSection = document.getElementById('answer-section');
+            const answerContent = document.getElementById('answer-content');
+            const loading = document.getElementById('loading');
+            
+            const question = questionInput.value.trim();
+            
+            if (!question) {
+                return;
+            }
+            
+            if (typeof window.smartCoach === 'undefined') {
+                answerContent.innerHTML = '<div class="error-message">Smart Coach is not available. Please ensure you are running in the secure browser.</div>';
+                answerSection.classList.add('visible');
+                return;
+            }
+            
+            askButton.disabled = true;
+            answerSection.classList.remove('visible');
+            loading.classList.add('visible');
+            
+            try {
+                const context = {
+                    role: 'RM',
+                    page: window.location.href,
+                    clientName: 'Sarah Connor',
+                    clientSegment: 'HIFI'
+                };
+                
+                const result = await window.smartCoach.ask(question, context);
+                
+                answerContent.textContent = result.answer || 'No answer available.';
+                answerSection.classList.add('visible');
+                
+            } catch (error) {
+                console.error('Error:', error);
+                answerContent.innerHTML = `<div class="error-message">Error: ${error.message || 'Failed to fetch response. Please check the console for details.'}</div>`;
+                answerSection.classList.add('visible');
+            } finally {
+                loading.classList.remove('visible');
+                askButton.disabled = false;
+            }
+        }
+
+        window.addEventListener('load', () => {
+            checkAPI();
+        });
+    </script>
+</body>
+</html>

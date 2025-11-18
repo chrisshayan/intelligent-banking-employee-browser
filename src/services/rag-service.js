@@ -2,14 +2,13 @@ const fs = require('fs');
 const path = require('path');
 const embeddingService = require('./embedding-service');
 
-// Try to load native RAG index module
+// Load native RAG module
 let ragNative = null;
 try {
   ragNative = require('../native/rag-index/build/Release/rag_index.node');
-  console.log('✅ RAG native module loaded successfully');
+  console.log('RAG native module loaded');
 } catch (error) {
-  console.warn('⚠️  RAG native module not available:', error.message);
-  console.warn('   Falling back to mock implementation');
+  console.warn('RAG native module not available, using mock:', error.message);
 }
 
 let indexInitialized = false;
@@ -28,7 +27,7 @@ function initializeIndex() {
   }
 
   indexInitialized = true;
-  console.log('✅ RAG index initialized');
+  console.log('RAG index initialized');
   return true;
 }
 
@@ -127,7 +126,7 @@ async function addDocuments(texts, metadata = []) {
     // Add to native index
     const result = ragNative.addDocuments(texts, embeddings);
     
-    console.log(`✅ Added ${result.added} documents to RAG index (total: ${result.total})`);
+    console.log(`Added ${result.added} documents to RAG index (total: ${result.total})`);
     
     return {
       indexed: result.added,

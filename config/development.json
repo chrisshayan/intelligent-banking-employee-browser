@@ -1,11 +1,9 @@
 {
   "app": {
-    "startUrl": "file://test-page.html"
+    "startUrl": "file://test-page-smart-coach.html"
   },
   "security": {
     "allowedOrigins": [
-      "https://*.backbase.com",
-      "https://*.backbase.io",
       "https://localhost:*",
       "http://localhost:*",
       "https://127.0.0.1:*",
