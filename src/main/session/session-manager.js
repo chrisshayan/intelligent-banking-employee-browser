@@ -77,18 +77,43 @@ function cleanupExpiredSessions() {
  * Validate session token
  */
 function validateToken(token, origin) {
-  for (const [sessionOrigin, session] of activeSessions.entries()) {
-    if (session.token === token && sessionOrigin === origin) {
-      if (!isSessionExpired(session)) {
-        return true;
+  // If origin is file://, be more lenient - check if token exists for any file:// origin
+  if (origin && origin.startsWith('file://')) {
+    for (const [sessionOrigin, session] of activeSessions.entries()) {
+      if (session.token === token && sessionOrigin.startsWith('file://')) {
+        if (!isSessionExpired(session)) {
+          return true;
+        }
+      }
+    }
+  } else {
+    // Exact match for non-file origins
+    for (const [sessionOrigin, session] of activeSessions.entries()) {
+      if (session.token === token && sessionOrigin === origin) {
+        if (!isSessionExpired(session)) {
+          return true;
+        }
       }
     }
   }
   return false;
 }
 
+/**
+ * Get origin from token (helper for API server)
+ */
+function getOriginFromToken(token) {
+  for (const [sessionOrigin, session] of activeSessions.entries()) {
+    if (session.token === token && !isSessionExpired(session)) {
+      return sessionOrigin;
+    }
+  }
+  return null;
+}
+
 module.exports = {
   initializeSessionManager,
-  validateToken
+  validateToken,
+  getOriginFromToken
 };
 

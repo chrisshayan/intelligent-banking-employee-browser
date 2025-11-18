@@ -7,7 +7,7 @@ const DEFAULT_CSP = [
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: https:",
   "font-src 'self' data:",
-  "connect-src 'self' https://localhost:8443 https://*.backbase.com https://*.backbase.io",
+  "connect-src 'self' https://localhost:8443",
   "frame-ancestors 'none'",
   "base-uri 'self'",
   "form-action 'self'"

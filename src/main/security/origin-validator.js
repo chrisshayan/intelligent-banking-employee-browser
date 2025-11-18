@@ -2,8 +2,6 @@ const config = require('../../utils/config');
 
 // Default allowed origins (can be overridden by config)
 const DEFAULT_ALLOWED_ORIGINS = [
-  /^https:\/\/.*\.backbase\.com$/,
-  /^https:\/\/.*\.backbase\.io$/,
   /^https:\/\/localhost:\d+$/, // Allow localhost for development
   /^https:\/\/127\.0\.0\.1:\d+$/, // Allow 127.0.0.1 for development
   /^file:\/\/.*$/ // Allow file:// for local testing

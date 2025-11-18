@@ -39,7 +39,7 @@ function createWindow() {
   });
 
   // Load initial URL (can be configured)
-  let startUrl = process.env.START_URL || config.get('app.startUrl') || 'https://app.backbase.com';
+  let startUrl = process.env.START_URL || config.get('app.startUrl') || 'file://test-page-smart-coach.html';
   
   // Handle file:// URLs in development
   if (startUrl.startsWith('file://') && !startUrl.startsWith('file:///')) {

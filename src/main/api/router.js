@@ -39,6 +39,11 @@ const inferenceHandler = require('./routes/inference');
 const ragHandler = require('./routes/rag');
 const escalateHandler = require('./routes/escalate');
 const healthHandler = require('./routes/health');
+const smartCoachHandler = require('./routes/smart-coach');
+const emailAssistantHandler = require('./routes/email-assistant');
+const campaignGeneratorHandler = require('./routes/campaign-generator');
+const productAdvisorHandler = require('./routes/product-advisor');
+const complianceCheckerHandler = require('./routes/compliance-checker');
 
 // Route definitions
 const routes = [
@@ -61,6 +66,31 @@ const routes = [
     method: 'POST',
     path: '/api/v1/escalate',
     handler: escalateHandler
+  },
+  {
+    method: 'POST',
+    path: '/api/v1/smart-coach/ask',
+    handler: smartCoachHandler
+  },
+  {
+    method: 'POST',
+    path: '/api/v1/email-assistant/generate',
+    handler: emailAssistantHandler
+  },
+  {
+    method: 'POST',
+    path: '/api/v1/campaign/generate',
+    handler: campaignGeneratorHandler
+  },
+  {
+    method: 'POST',
+    path: '/api/v1/product-advisor/recommend',
+    handler: productAdvisorHandler
+  },
+  {
+    method: 'POST',
+    path: '/api/v1/compliance/check',
+    handler: complianceCheckerHandler
   }
 ];
 

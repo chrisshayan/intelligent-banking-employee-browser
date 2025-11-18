@@ -1,204 +1,155 @@
-# Backbase Secure Runtime
+# Bank Secure Runtime
 
-Intelligent Employee Browser with on-device AI capabilities.
+Custom browser with on-device AI for Bank applications.
 
 ## Overview
 
-Backbase Secure Runtime is a custom, secure browser environment designed exclusively for bank employees. It provides a seamless, AI-enhanced experience for all Backbase applications while ensuring the highest levels of data privacy and security through on-device AI processing.
+Secure Electron-based browser that runs a local Small Language Model (SLM) to provide AI features directly on the employee's machine. All processing happens locally - no data leaves the device.
 
 ## Features
 
-- **On-Device AI Processing**: Small Language Model (SLM) runs locally on the user's machine
-- **Secure Architecture**: Hardened Electron-based browser with comprehensive security controls
-- **Origin Validation**: Only Backbase applications can access the AI bridge
-- **Content Security Policy**: Strict CSP enforcement for all web content
-- **Certificate Pinning**: Enhanced security for Backbase domains
-- **Privacy-First**: Sensitive data never leaves the device
+- **On-device AI**: Local SLM inference using ONNX Runtime
+- **RAG Search**: Vector-based document search with FAISS
+- **Smart Coach**: Instant answers from bank documentation
+- **Email Assistant**: Context-aware email generation
+- **Campaign Generator**: Multi-channel marketing content
+- **Product Advisor**: Personalized product recommendations
+- **Compliance Checker**: Real-time compliance verification
 
-## Development Setup
+## Quick Start
 
 ### Prerequisites
 
-- Node.js 18+ 
-- npm or yarn
-- Git
+- Node.js 18+
+- macOS (for native module builds)
+- Xcode command-line tools: `xcode-select --install`
 
 ### Installation
 
-1. Clone the repository:
-   ```bash
-   git clone <repository-url>
-   cd backbase-secure-runtime
-   ```
-
-2. Install dependencies:
-   ```bash
-   npm install
-   ```
-
-3. Start the application:
-   ```bash
-   npm start
-   ```
-
-   Or in development mode (with DevTools):
-   ```bash
-   npm run dev
-   ```
-
-### Project Structure
-
-```
-backbase-secure-runtime/
-├── src/
-│   ├── main/              # Electron main process
-│   │   ├── main.js        # Application entry point
-│   │   ├── window-manager.js
-│   │   ├── security/      # Security modules
-│   │   └── session/       # Session management
-│   ├── preload/           # Preload scripts
-│   ├── services/          # High-level services
-│   └── utils/             # Utility functions
-├── config/                # Configuration files
-├── test/                  # Tests
-└── resources/             # Application resources
+```bash
+npm install
 ```
 
-See [PROJECT_STRUCTURE.md](./PROJECT_STRUCTURE.md) for detailed structure documentation.
+### Development
 
-## Configuration
+```bash
+# Set library path (required for ONNX Runtime)
+export DYLD_LIBRARY_PATH=./native-libs/onnxruntime/onnxruntime-osx-arm64-1.16.2/lib:$DYLD_LIBRARY_PATH
 
-Configuration files are located in the `config/` directory:
+# Start the app
+npm start
+```
 
-- `default.json` - Default configuration
-- `development.json` - Development overrides
-- `production.json` - Production overrides
+Or use the startup script:
+```bash
+./scripts/start.sh
+```
 
-Key configuration options:
-
-- **Security**: Allowed origins, CSP policy, certificate pinning
-- **SLM**: Model path, inference parameters
-- **API**: Localhost API server configuration
-
-## Building
-
-### Build Native Modules
+### Building Native Modules
 
 ```bash
 npm run build:native
 ```
 
-> **macOS prerequisites:** installing/building native modules requires the Xcode
-> command-line tools and an accepted license. Run `xcode-select --install` and
-> `sudo xcodebuild -license` once per machine.
+Note: Requires Xcode license acceptance: `sudo xcodebuild -license`
 
-### Build Electron App
+## Project Structure
+
+```
+src/
+├── main/              # Electron main process
+│   ├── api/          # API routes and handlers
+│   ├── security/     # Security policies
+│   └── session/      # Session management
+├── preload/          # Preload scripts (bridge API)
+├── services/         # Core services (SLM, RAG, etc.)
+├── features/         # MVP features
+│   ├── smart-coach/
+│   ├── email-assistant/
+│   ├── campaign-generator/
+│   ├── product-advisor/
+│   └── compliance-checker/
+└── native/           # Native C++ modules
+    ├── slm-runtime/  # ONNX Runtime integration
+    └── rag-index/    # FAISS integration
+```
+
+## Configuration
+
+Edit `config/development.json` or `config/production.json`:
+
+- `app.startUrl`: Initial URL to load
+- `security.allowedOrigins`: Whitelisted origins
+- `api.port`: Localhost API server port (default: 8443)
+- `slm.modelPath`: Path to ONNX model file
+
+## API Usage
+
+The browser exposes a JavaScript API to web pages:
+
+```javascript
+// Smart Coach
+const result = await window.smartCoach.ask("What are the requirements for Premium Savings?");
+
+// Email Assistant
+const email = await window.smartCoach.generateEmail({
+  clientName: "John Doe",
+  purpose: "product recommendation",
+  tone: "professional"
+});
+
+// Campaign Generator
+const campaign = await window.smartCoach.generateCampaign({
+  campaignName: "Summer Campaign",
+  objective: "product launch",
+  channels: ['email', 'sms']
+});
+
+// Product Recommendations
+const recommendations = await window.smartCoach.recommendProducts({
+  clientId: "CLIENT123",
+  profile: { balance: 150000, tier: "Premium" }
+});
+
+// Compliance Check
+const check = await window.smartCoach.checkCompliance({
+  content: "Get guaranteed returns!",
+  contentType: "email"
+});
+```
+
+## Testing
+
+```bash
+# Run all tests
+npm test
+
+# Unit tests only
+npm run test:unit
+
+# Integration tests
+npm run test:integration
+```
+
+## Building for Production
 
 ```bash
 npm run build
 ```
 
-This will create platform-specific installers in `build/dist/`.
-
-## Testing
-
-Run all tests:
-```bash
-npm test
-```
-
-Run unit tests only:
-```bash
-npm run test:unit
-```
-
-Run integration tests:
-```bash
-npm run test:integration
-```
-
-## Development
-
-### Code Quality
-
-Lint code:
-```bash
-npm run lint
-```
-
-Format code:
-```bash
-npm run format
-```
-
-### Testing the Application
-
-1. Start the app: `npm start` or `npm run dev`
-2. The app will open with a test page (in development mode)
-3. Check the browser console to see if the `backbaseAI` bridge is loaded
-4. Test the API by clicking the test buttons on the test page
-
-## Current Status
-
-### ✅ Completed
-
-- Project structure
-- Basic Electron application
-- Security foundation:
-  - Origin validation
-  - CSP enforcement
-  - Certificate pinning (framework)
-- Session management
-- JavaScript bridge (preload script)
-- Configuration system
-
-### 🚧 In Progress
-
-- Localhost API server
-- SLM runtime integration
-- RAG implementation
-
-### 📋 Planned
-
-- Native module implementation
-- MVP features (Smart Coach, Email Assistant, etc.)
-- Comprehensive testing
-- Deployment packaging
-
-## Architecture
-
-The application is built on:
-
-- **Electron**: Browser framework
-- **Node.js**: Runtime environment
-- **ONNX Runtime**: SLM inference (planned)
-- **FAISS**: Vector search (planned)
-
-See [PROJECT_PROPOSAL.md](./PROJECT_PROPOSAL.md) for detailed architecture documentation.
+Outputs platform-specific installers in `build/dist/`.
 
 ## Security
 
-Security is a top priority. The application implements:
-
-- Origin-based access control
+- Origin validation (only Bank domains)
 - Content Security Policy enforcement
-- Certificate pinning for Backbase domains
-- Secure session management
-- Encrypted local storage (planned)
-- Process isolation and sandboxing
+- Certificate pinning
+- Process isolation
+- Encrypted local storage
 
-## Contributing
+## Development Notes
 
-See [CONTRIBUTING.md](./CONTRIBUTING.md) for contribution guidelines.
+- Native modules require rebuilding after Node.js version changes
+- Model files should be placed in `resources/models/`
+- API server runs on `https://localhost:8443` (self-signed cert in dev)
 
-## License
-
-PROPRIETARY - Backbase Internal Use Only
-
-## Support
-
-For issues and questions, please contact the development team.
-
----
-
-**Note**: This is an early-stage project. Many features are still in development. See [NEXT_STEPS.md](./NEXT_STEPS.md) for the implementation roadmap.
