@@ -1,4 +1,40 @@
-const { parseBody, sendError } = require('./api-server');
+// Helper functions (moved here to avoid circular dependency)
+function parseBody(req) {
+  return new Promise((resolve, reject) => {
+    let body = '';
+    
+    req.on('data', (chunk) => {
+      body += chunk.toString();
+    });
+    
+    req.on('end', () => {
+      try {
+        if (body) {
+          resolve(JSON.parse(body));
+        } else {
+          resolve({});
+        }
+      } catch (error) {
+        reject(new Error('Invalid JSON in request body'));
+      }
+    });
+    
+    req.on('error', (error) => {
+      reject(error);
+    });
+  });
+}
+
+function sendError(res, statusCode, statusMessage, error) {
+  res.writeHead(statusCode, {
+    'Content-Type': 'application/json'
+  });
+  res.end(JSON.stringify({
+    error: statusMessage,
+    message: error,
+    timestamp: new Date().toISOString()
+  }));
+}
 const inferenceHandler = require('./routes/inference');
 const ragHandler = require('./routes/rag');
 const escalateHandler = require('./routes/escalate');

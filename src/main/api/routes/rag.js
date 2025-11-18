@@ -52,4 +52,3 @@ async function ragHandler(req, res, body, authResult) {
 }
 
 module.exports = ragHandler;
-

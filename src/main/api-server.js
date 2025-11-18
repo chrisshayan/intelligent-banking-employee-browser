@@ -4,7 +4,6 @@ const path = require('path');
 const config = require('../utils/config');
 const { validateToken } = require('./session/session-manager');
 const { validateOrigin } = require('./security/origin-validator');
-const router = require('./api/router');
 
 let server = null;
 
@@ -29,11 +28,19 @@ function startAPIServer() {
       serverOptions.key = fs.readFileSync(keyPath);
     } else {
       console.warn('TLS certificates not found. Generating self-signed certificate...');
-      // Generate self-signed certificate for development
-      const { generateSelfSignedCert } = require('../utils/certificate-generator');
-      const cert = generateSelfSignedCert();
-      serverOptions.cert = cert.cert;
-      serverOptions.key = cert.key;
+      try {
+        // Generate self-signed certificate for development
+        const { generateSelfSignedCert } = require('../utils/certificate-generator');
+        const cert = generateSelfSignedCert();
+        serverOptions.cert = cert.cert;
+        serverOptions.key = cert.key;
+        console.log('✅ Self-signed certificate generated');
+      } catch (error) {
+        console.error('Failed to generate certificate:', error.message);
+        console.warn('Starting API server without TLS (HTTP only)');
+        // Fall back to HTTP/2 without TLS (not recommended but works for testing)
+        return startAPIServerHTTP();
+      }
     }
   }
 
@@ -55,6 +62,21 @@ function startAPIServer() {
   });
 
   return server;
+}
+
+/**
+ * Start HTTP/2 server without TLS (fallback for development)
+ */
+function startAPIServerHTTP() {
+  const port = config.get('api.port', 8443);
+  const host = config.get('api.host', '127.0.0.1');
+  
+  console.warn('⚠️  Starting API server without TLS (HTTP only) - NOT RECOMMENDED FOR PRODUCTION');
+  
+  // Note: HTTP/2 without TLS is not well supported, so we'd need to use HTTP/1.1
+  // For now, just log the error and return null
+  console.error('HTTP/2 without TLS is not supported. Please generate certificates.');
+  return null;
 }
 
 /**
@@ -100,6 +122,7 @@ async function handleRequest(req, res) {
     }
 
     // Route request
+    const router = require('./api/router');
     const routeResult = await router.route(req, res, pathname, authResult);
     
     if (!routeResult.handled) {

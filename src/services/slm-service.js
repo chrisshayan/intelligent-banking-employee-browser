@@ -1,76 +1,53 @@
-const fs = require('fs');
-const path = require('path');
 const config = require('../utils/config');
+const path = require('path');
 
+// Try to load native module
 let slmNative = null;
-let nativeInitialized = false;
-let nativeAvailable = false;
-let nativeLoadError = null;
-let nativeModelLoaded = false;
-let resolvedModelPath = null;
-
-function resolveNativeModule() {
-  if (nativeInitialized) {
-    return nativeAvailable;
-  }
-
-  nativeInitialized = true;
-
-  const candidatePaths = [
-    path.join(__dirname, '../native/slm-runtime/build/Release/slm_runtime.node'),
-    path.join(__dirname, '../native/slm-runtime/build/Debug/slm_runtime.node')
-  ];
-
-  for (const candidate of candidatePaths) {
-    if (fs.existsSync(candidate)) {
-      try {
-        slmNative = require(candidate);
-        nativeAvailable = true;
-        console.log('[SLM] Native module loaded:', candidate);
-        break;
-      } catch (error) {
-        nativeLoadError = error;
-      }
-    }
-  }
-
-  if (!nativeAvailable) {
-    nativeLoadError = nativeLoadError || new Error('Native module not found');
-    console.warn('[SLM] Native module unavailable:', nativeLoadError.message);
-  } else {
-    tryLoadModel();
-  }
-
-  return nativeAvailable;
+try {
+  slmNative = require('../native/slm-runtime/build/Release/slm_runtime.node');
+  console.log('✅ SLM native module loaded successfully');
+} catch (error) {
+  console.warn('⚠️  SLM native module not available:', error.message);
+  console.warn('   Falling back to mock implementation');
 }
 
-function tryLoadModel() {
+let modelLoaded = false;
+
+/**
+ * Load the SLM model
+ */
+async function loadModel() {
   if (!slmNative) {
-    return;
+    console.warn('Native module not available, cannot load model');
+    return false;
   }
 
   const modelPath = config.get('slm.modelPath');
   if (!modelPath) {
-    console.warn('[SLM] No model path configured');
-    return;
-  }
-
-  resolvedModelPath = path.isAbsolute(modelPath)
-    ? modelPath
-    : path.resolve(process.cwd(), modelPath);
-
-  if (!fs.existsSync(resolvedModelPath)) {
-    console.warn('[SLM] Model file not found:', resolvedModelPath);
-    return;
+    console.error('Model path not configured');
+    return false;
   }
 
   try {
-    const loaded = slmNative.loadModel(resolvedModelPath);
-    nativeModelLoaded = Boolean(loaded);
-    console.log('[SLM] Model loaded:', resolvedModelPath);
+    // Resolve relative paths
+    const resolvedPath = path.isAbsolute(modelPath) 
+      ? modelPath 
+      : path.resolve(__dirname, '../../', modelPath);
+
+    const result = slmNative.loadModel(resolvedPath);
+    modelLoaded = result;
+    
+    if (modelLoaded) {
+      console.log('✅ SLM model loaded:', resolvedPath);
+    } else {
+      console.error('❌ Failed to load SLM model');
+    }
+    
+    return modelLoaded;
   } catch (error) {
-    nativeModelLoaded = false;
-    console.error('[SLM] Failed to load model:', error.message);
+    console.error('Error loading model:', error);
+    modelLoaded = false;
+    return false;
   }
 }
 
@@ -81,31 +58,32 @@ function tryLoadModel() {
  * @returns {Promise<object>} Inference result
  */
 async function infer(prompt, options = {}) {
-  if (resolveNativeModule() && nativeModelLoaded) {
+  // If native module is available and model is loaded, use it
+  if (slmNative && modelLoaded) {
     try {
-      const result = slmNative.infer(prompt, options);
+      const result = slmNative.infer(prompt);
       return {
-        text: result.text || '',
+        text: result.text,
         tokens_generated: result.tokens_generated || 0,
-        confidence: result.confidence || 0,
-        backend: 'native'
+        confidence: result.confidence || 0.0
       };
     } catch (error) {
-      console.error('[SLM] Native inference failed, falling back to mock:', error.message);
+      console.error('Native inference error:', error);
+      // Fall through to mock
     }
   }
 
-  console.log('SLM Service: Using mock inference backend', { prompt: prompt.substring(0, 50) + '...' });
-
+  // Fallback to mock if native module not available or model not loaded
+  console.log('SLM Service: Using mock inference (native module:', !!slmNative, ', model loaded:', modelLoaded, ')');
+  
   // Simulate inference delay
   await new Promise(resolve => setTimeout(resolve, 100));
 
   // Mock response
   return {
-    text: `[Mock Response] This is a placeholder response for: "${prompt.substring(0, 50)}..."\n\nThe native SLM module will be used automatically once it is built and a model is available.`,
+    text: `[Mock Response] This is a placeholder response for: "${prompt.substring(0, 50)}..."\n\nThe native module is ${slmNative ? 'available' : 'not available'} and model is ${modelLoaded ? 'loaded' : 'not loaded'}.`,
     tokens_generated: Math.floor(Math.random() * 50) + 10,
-    confidence: 0.85,
-    backend: nativeAvailable ? 'native (model missing)' : 'mock'
+    confidence: 0.85
   };
 }
 
@@ -129,20 +107,44 @@ async function inferBatch(prompts, options = {}) {
  * @returns {object} Model information
  */
 function getModelInfo() {
-  resolveNativeModule();
+  if (slmNative) {
+    try {
+      const status = slmNative.getStatus();
+      return {x`x`
+        name: 'phi4-mini',
+        version: '1.0.0',
+        status: status.loaded ? 'loaded' : 'not_loaded',
+        path: status.modelPath || config.get('slm.modelPath'),
+        backend: status.backend || 'unknown'
+      };
+    } catch (error) {
+      console.error('Error getting model status:', error);
+    }
+  }
+
   return {
     name: 'phi4-mini',
     version: '1.0.0',
-    status: nativeModelLoaded ? 'loaded' : (nativeAvailable ? 'model_not_found' : 'native_unavailable'),
-    path: resolvedModelPath || config.get('slm.modelPath'),
-    nativeAvailable,
-    nativeLoadError: nativeLoadError ? nativeLoadError.message : null
+    status: 'not_loaded',
+    path: config.get('slm.modelPath'),
+    backend: 'mock'
   };
 }
 
+// Auto-load model on module initialization (if path is configured)
+if (slmNative) {
+  const modelPath = config.get('slm.modelPath');
+  if (modelPath) {
+    // Try to load, but don't block if it fails
+    loadModel().catch(err => {
+      console.warn('Auto-load model failed:', err.message);
+    });
+  }
+}
+
 module.exports = {
+  loadModel,
   infer,
   inferBatch,
   getModelInfo
 };
-

@@ -12,6 +12,7 @@ std::string g_modelPath;
 std::unique_ptr<Ort::Env> g_env;
 std::unique_ptr<Ort::Session> g_session;
 std::unique_ptr<Ort::SessionOptions> g_sessionOptions;
+Ort::AllocatorWithDefaultOptions g_allocator;
 
 Napi::Value LoadModel(const Napi::CallbackInfo& info) {
   Napi::Env env = info.Env();
@@ -36,6 +37,10 @@ Napi::Value LoadModel(const Napi::CallbackInfo& info) {
     g_modelLoaded = false;
     Napi::Error::New(env, std::string("Failed to load model: ") + e.what()).ThrowAsJavaScriptException();
     return env.Null();
+  } catch (...) {
+    g_modelLoaded = false;
+    Napi::Error::New(env, "Failed to load model: Unknown error").ThrowAsJavaScriptException();
+    return env.Null();
   }
 }
 
@@ -52,6 +57,18 @@ Napi::Value GetStatus(const Napi::CallbackInfo& info) {
   status.Set("loaded", g_modelLoaded);
   status.Set("modelPath", g_modelPath);
   status.Set("backend", "onnxruntime-cpp");
+  
+  if (g_modelLoaded && g_session) {
+    try {
+      size_t numInputNodes = g_session->GetInputCount();
+      size_t numOutputNodes = g_session->GetOutputCount();
+      status.Set("inputCount", static_cast<int>(numInputNodes));
+      status.Set("outputCount", static_cast<int>(numOutputNodes));
+    } catch (...) {
+      // Ignore errors getting node counts
+    }
+  }
+  
   return status;
 }
 
@@ -61,28 +78,94 @@ Napi::Value Infer(const Napi::CallbackInfo& info) {
     Napi::Error::New(env, "Model not loaded").ThrowAsJavaScriptException();
     return env.Null();
   }
-  std::string prompt = info.Length() > 0 && info[0].IsString() ? info[0].As<Napi::String>() : "";
-  // To demonstrate, run model with dummy input vector (shape [1,1])
-  std::vector<int64_t> dims = {1, 1};
-  std::vector<float> input_vals = {42.0f};
+  
+  std::string prompt = "";
+  if (info.Length() > 0 && info[0].IsString()) {
+    prompt = info[0].As<Napi::String>();
+  }
 
   try {
+    std::lock_guard<std::mutex> lock(g_mutex);
+    
+    // Get input/output node info
+    size_t numInputNodes = g_session->GetInputCount();
+    size_t numOutputNodes = g_session->GetOutputCount();
+    
+    if (numInputNodes == 0 || numOutputNodes == 0) {
+      Napi::Error::New(env, "Model has no input or output nodes").ThrowAsJavaScriptException();
+      return env.Null();
+    }
+    
+    // Get input/output names using the correct API
     Ort::AllocatorWithDefaultOptions allocator;
-    const char* input_name = g_session->GetInputName(0, allocator);
-    const char* output_name = g_session->GetOutputName(0, allocator);
-    std::array<int64_t,2> shape = {1, 1};
-    auto input_tensor = Ort::Value::CreateTensor<float>(allocator.GetInfo(), input_vals.data(), 1, dims.data(), 2);
-    std::vector<Ort::Value> ort_inputs;
-    ort_inputs.push_back(std::move(input_tensor));
-    auto output_tensors = g_session->Run(Ort::RunOptions{nullptr}, &input_name, ort_inputs.data(), 1, &output_name, 1);
-    float result = output_tensors.front().GetTensorMutableData<float>()[0];
+    auto inputName = g_session->GetInputNameAllocated(0, allocator);
+    auto outputName = g_session->GetOutputNameAllocated(0, allocator);
+    
+    // Get input shape
+    auto inputTypeInfo = g_session->GetInputTypeInfo(0);
+    auto tensorInfo = inputTypeInfo.GetTensorTypeAndShapeInfo();
+    auto inputShape = tensorInfo.GetShape();
+    
+    // Create a simple dummy input tensor for demonstration
+    // In a real implementation, this would tokenize the prompt
+    std::vector<int64_t> inputDims;
+    if (inputShape.empty() || inputShape[0] == -1) {
+      inputDims = {1, 1}; // Batch size 1, sequence length 1
+    } else {
+      inputDims = inputShape;
+      // Replace -1 with 1 (dynamic dimension)
+      for (auto& dim : inputDims) {
+        if (dim == -1) dim = 1;
+      }
+    }
+    
+    size_t inputSize = 1;
+    for (auto dim : inputDims) {
+      inputSize *= dim;
+    }
+    
+    // Create input tensor with dummy data
+    std::vector<float> inputData(inputSize, 0.0f);
+    auto memoryInfo = Ort::MemoryInfo::CreateCpu(OrtArenaAllocator, OrtMemTypeDefault);
+    auto inputTensor = Ort::Value::CreateTensor<float>(
+      memoryInfo, inputData.data(), inputSize, inputDims.data(), inputDims.size()
+    );
+    
+    // Run inference
+    const char* inputNames[] = {inputName.get()};
+    const char* outputNames[] = {outputName.get()};
+    std::vector<Ort::Value> inputTensors;
+    inputTensors.push_back(std::move(inputTensor));
+    
+    auto outputTensors = g_session->Run(
+      Ort::RunOptions{nullptr},
+      inputNames, inputTensors.data(), 1,
+      outputNames, 1
+    );
+    
+    // Extract output (simplified - assumes single float output)
+    // Ort::Value is move-only, so we need to access it directly
+    float* outputData = outputTensors[0].GetTensorMutableData<float>();
+    float result = outputData[0];
+    
+    // Create response
     Napi::Object out = Napi::Object::New(env);
-    out.Set("text", std::string("[ONNX-Runtime] Model invoked. Result: ") + std::to_string(result));
+    out.Set("text", std::string("[ONNX Runtime] Model inference completed. Prompt: \"") + 
+                   prompt.substr(0, 50) + 
+                   (prompt.length() > 50 ? "..." : "") + 
+                   "\". Output value: " + std::to_string(result));
     out.Set("tokens_generated", 1);
     out.Set("confidence", 0.99);
+    
     return out;
   } catch (const Ort::Exception& e) {
-    Napi::Error::New(env, std::string("ONNX inference failure: ") + e.what()).ThrowAsJavaScriptException();
+    Napi::Error::New(env, std::string("ONNX inference error: ") + e.what()).ThrowAsJavaScriptException();
+    return env.Null();
+  } catch (const std::exception& e) {
+    Napi::Error::New(env, std::string("Inference error: ") + e.what()).ThrowAsJavaScriptException();
+    return env.Null();
+  } catch (...) {
+    Napi::Error::New(env, "Inference error: Unknown exception").ThrowAsJavaScriptException();
     return env.Null();
   }
 }

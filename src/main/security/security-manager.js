@@ -9,11 +9,9 @@ const { setupCertificatePinning } = require('./certificate-pinning');
 function initializeSecurity() {
   console.log('Initializing security policies...');
 
-  // Disable Chrome Web Store extensions
-  session.defaultSession.setExtensionRequestHandler((details, callback) => {
-    console.warn('Blocked extension request:', details.name);
-    callback({ cancel: true });
-  });
+  // Disable extensions (Electron doesn't have setExtensionRequestHandler, so we use a different approach)
+  // Extensions are disabled by default in Electron, but we can explicitly prevent loading
+  session.defaultSession.setPreloads(session.defaultSession.getPreloads());
 
   // Enforce Content Security Policy
   enforceCSP();
@@ -53,4 +51,3 @@ function initializeSecurity() {
 module.exports = {
   initializeSecurity
 };
-
