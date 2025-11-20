@@ -20,14 +20,17 @@ async function answerQuestion(question, context = {}) {
 
     // Generate answer
     const inferenceResult = await slmService.infer(prompt, {
-      max_tokens: 300,
+      max_tokens: 500,
       temperature: 0.7
     });
+
+    // Clean up the response - remove instructions, meta-commentary, and formatting artifacts
+    let cleanedAnswer = cleanResponse(inferenceResult.text);
 
     const latency = Date.now() - startTime;
 
     return {
-      answer: inferenceResult.text,
+      answer: cleanedAnswer,
       sources: ragResults.map(r => ({
         text: r.text.substring(0, 200) + (r.text.length > 200 ? '...' : ''),
         source: r.source,
@@ -48,16 +51,21 @@ function buildPrompt(question, context, userContext) {
   const roleContext = userContext.role ? `\nUser Role: ${userContext.role}` : '';
   const pageContext = userContext.page ? `\nCurrent Page: ${userContext.page}` : '';
 
-  return `You are a helpful banking assistant. Answer the following question based on the provided context from bank documentation.
+  // If no context was found, provide helpful guidance
+  const hasContext = context && context.trim().length > 0;
+  const contextSection = hasContext 
+    ? `Context from bank documentation:\n${context}`
+    : `Note: No specific documentation was found for this question. Use your general banking knowledge to provide a helpful answer.`;
+
+  return `You are a helpful banking assistant. Answer the question directly and concisely.
 
 ${roleContext}${pageContext}
 
-Context from bank documentation:
-${context}
+${contextSection}
 
 Question: ${question}
 
-Provide a clear, concise answer based on the context. If the context doesn't contain enough information, say so.`;
+Answer:`;
 }
 
 async function indexKnowledgeBase(documents, metadata = []) {
@@ -96,6 +104,77 @@ async function indexKnowledgeBase(documents, metadata = []) {
 
 function getKnowledgeBaseStats() {
   return ragService.getIndexStats();
+}
+
+/**
+ * Clean up model response to remove instructions, meta-commentary, and formatting artifacts
+ */
+function cleanResponse(text) {
+  if (!text) return '';
+  
+  let cleaned = text.trim();
+  
+  // Remove common instruction patterns
+  const instructionPatterns = [
+    /^Do not include.*?\.\s*/gmi,
+    /^If you're.*?\.\s*/gmi,
+    /^Instructions?:.*?$/gmi,
+    /^- Do not.*?$/gmi,
+    /^- If.*?$/gmi,
+    /^Note:.*?$/gmi,
+    /^OR\s+/gmi,
+    /^Customer Value Profit.*?not value profit.*?$/gmi,
+    /^The question asks.*?$/gmi,
+    /^Since the provided context.*?$/gmi,
+    /^I will provide.*?$/gmi,
+    /^To calculate.*?$/gmi,
+    /^You would follow.*?$/gmi,
+    /^1\.\s*Determine.*?$/gmi,
+    /^2\.\s*Calculate.*?$/gmi,
+    /^\[.*?\]/g, // Remove bracketed notes
+  ];
+  
+  for (const pattern of instructionPatterns) {
+    cleaned = cleaned.replace(pattern, '');
+  }
+  
+  // Remove lines that are just instructions
+  const lines = cleaned.split('\n');
+  const filteredLines = lines.filter(line => {
+    const trimmed = line.trim();
+    if (!trimmed) return true; // Keep empty lines for spacing
+    
+    // Remove lines that look like instructions
+    const lower = trimmed.toLowerCase();
+    if (lower.startsWith('do not') || 
+        lower.startsWith('if the question') ||
+        lower.startsWith('if you') ||
+        lower.startsWith('instructions') ||
+        lower.startsWith('note:') ||
+        lower.startsWith('the question asks') ||
+        lower.startsWith('since the provided') ||
+        lower.startsWith('i will') ||
+        lower.startsWith('to calculate') ||
+        lower.startsWith('you would') ||
+        lower.match(/^\d+\.\s*(determine|calculate|identify|assess)/i)) {
+      return false;
+    }
+    
+    return true;
+  });
+  
+  cleaned = filteredLines.join('\n').trim();
+  
+  // Remove multiple consecutive newlines
+  cleaned = cleaned.replace(/\n{3,}/g, '\n\n');
+  
+  // Remove leading/trailing whitespace from each line
+  cleaned = cleaned.split('\n').map(line => line.trim()).join('\n');
+  
+  // If the response starts with "Answer:" or similar, remove it
+  cleaned = cleaned.replace(/^(Answer|Response|Output):\s*/i, '');
+  
+  return cleaned.trim();
 }
 
 module.exports = {
