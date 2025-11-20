@@ -2,6 +2,7 @@
 node_modules/
 package-lock.json
 
+
 # Build outputs
 build/
 dist/
@@ -17,6 +18,9 @@ native-libs/openssl/
 resources/models/*.onnx
 resources/models/*.model
 resources/models/*.bin
+resources/models/Phi-4-mini-instruct-onnx/
+resources/models/Phi-4-mini-instruct-onnx/*
+
 
 # IDE
 .vscode/
