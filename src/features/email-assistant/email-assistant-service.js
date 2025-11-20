@@ -57,8 +57,9 @@ async function generateEmailDraft(params) {
       temperature: 0.8 // Slightly higher for more creative email generation
     });
 
-    // Step 5: Parse and format email
-    const email = parseEmailDraft(result.text, subject);
+    // Step 5: Clean and parse email
+    const cleanedText = cleanEmailResponse(result.text);
+    const email = parseEmailDraft(cleanedText, subject);
 
     return {
       to: context.email || `${clientName}@example.com`,
@@ -102,11 +103,13 @@ function buildEmailPrompt({ clientName, subject, purpose, context, tone, templat
     contextText += `\nPrevious Interactions:\n${previousInteractions.slice(-3).join('\n')}\n`;
   }
   
-  if (templateContext) {
+  if (templateContext && templateContext.trim().length > 0) {
     contextText += `\nEmail Templates/Examples:\n${templateContext}\n`;
+  } else {
+    contextText += `\nNote: Use standard banking email format - professional greeting, clear purpose, helpful content, professional closing.`;
   }
   
-  contextText += `\nGenerate a professional, compliant email draft. Ensure it follows bank communication guidelines.`;
+  contextText += `\n\nGenerate a professional, compliant email draft. Output only the email content - no instructions, explanations, or meta-commentary. Start directly with the email subject and body.`;
   
   return contextText;
 }
@@ -187,6 +190,55 @@ async function generateEmailVariations(params, count = 3) {
   }
   
   return variations;
+}
+
+/**
+ * Clean up email response to remove instructions and meta-commentary
+ */
+function cleanEmailResponse(text) {
+  if (!text) return '';
+  
+  let cleaned = text.trim();
+  
+  // Remove instruction patterns
+  const instructionPatterns = [
+    /^Do not include.*?\.\s*/gmi,
+    /^Instructions?:.*?$/gmi,
+    /^- Do not.*?$/gmi,
+    /^- If.*?$/gmi,
+    /^Note:.*?$/gmi,
+    /^Generate.*?email.*?$/gmi,
+    /^Output only.*?$/gmi,
+    /^Start directly.*?$/gmi,
+  ];
+  
+  for (const pattern of instructionPatterns) {
+    cleaned = cleaned.replace(pattern, '');
+  }
+  
+  // Remove lines that are just instructions
+  const lines = cleaned.split('\n');
+  const filteredLines = lines.filter(line => {
+    const trimmed = line.trim();
+    if (!trimmed) return true;
+    
+    const lower = trimmed.toLowerCase();
+    if (lower.startsWith('do not') || 
+        lower.startsWith('instructions') ||
+        lower.startsWith('note:') ||
+        lower.startsWith('generate') ||
+        lower.startsWith('output only') ||
+        lower.startsWith('start directly')) {
+      return false;
+    }
+    
+    return true;
+  });
+  
+  cleaned = filteredLines.join('\n').trim();
+  cleaned = cleaned.replace(/\n{3,}/g, '\n\n');
+  
+  return cleaned.trim();
 }
 
 module.exports = {
